@@ -1,0 +1,126 @@
+
+automaton Afford(int account){
+    clock d
+    function pay(){
+
+    }
+    transition{
+        account>=value && condition==true->
+        {
+            d=0
+            pay()
+            sync paid
+        }
+    }
+}
+
+automaton Wait(d:clock){
+    function payback(){
+
+    }
+    choice transition{
+        d>7->{
+            sync abort
+            payback()
+        }
+        d<=7{
+            sync delivered
+        }
+    }
+}
+automaton ConfirmReceived(goods,account:int){
+    function receive(){
+        goods := goods + 1
+        storage := storage - 1
+    }
+    function payback(){
+        account := account + value
+        warehouse := warehouse -value
+    }
+    choice transition{
+        true -> {
+            sync abort
+            payback()
+        }
+        true -> {
+            sync confirmed
+            receive()
+        }
+    }
+}
+
+system buyer(value:int){
+    internals{account:int}
+    components{
+        afford:Afford()
+        confirmReceived:ConfirmReceived()
+    }
+    connections{
+        wait(Afford d)
+    }
+}
+
+
+automaton idel(){
+    ordered transition{
+        goods==0 -> {
+            condition = false
+        }
+        sync paid
+    }
+}
+
+automaton deliverConfirm(){
+    function deliver(){
+        goods := goods - 1
+
+    }
+    choice transition{
+        true -> {
+            sync abort
+        }
+        true -> {
+            sync delivered
+            deliver()
+        }
+    }
+}
+
+automaton wait(goods,account:int){
+    function getback(){
+        goods := goods + 1
+        storage := storage -1
+    }
+    function getmoney(){
+        account := account + value
+        warehouse := warehouse - value
+    }
+    choice transition{
+        true ->{
+            sync abort
+            getback()
+        }
+        true -> {
+            sync confirmed
+            getmoney()
+        }
+    }
+}
+system seller(goods:int){
+    internal{account:int}
+    components{
+        idel:Idel()
+        deliverConfirm:DeliverConfirm()
+        wait:Wait()
+    }
+}
+
+
+system purchase(){
+    components{
+        buyer1:buyer(30)
+        buyer2:buyer(20)
+        seller1:seller(4)
+    }
+}
+
